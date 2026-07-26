@@ -225,6 +225,24 @@ struct WalletKitConfigImpl: WalletKitConfig {
       DocumentTypeIdentifier.sdJwtPid.rawValue: .pid
     ]
 
+    _ = loteLocations; _ = classifications  // referenced only by commented-out ORIGINAL below
+    // LOCAL DEMO OVERRIDE (Baoli): make the bundled static list (which includes `dev-ca`)
+    // the PRIMARY trust source. Reason: TrustConfiguration wires `fallbackTrustSource`
+    // ONLY into `issuerTrustManager`; the reader/relying-party path uses `accessTrustManager`,
+    // which is built from `trustSource` alone (fallback dropped). With `.etsi(...)` primary,
+    // the local `Local Verifier Dev CA` is never consulted on the WRPAC/reader path, causing
+    // "relying party could not be verified". StaticListTrustSource(rootCertificates:) maps the
+    // anchors into the .wrpac context, so this makes the dev CA authoritative for presentation.
+    // To restore upstream behavior, revert to the .etsi primary + staticList fallback below.
+    return TrustConfiguration(
+      trustSource: .staticList(
+        StaticListTrustSource(rootCertificates: staticRootCertificates)
+      ),
+      defaultPolicy: .warning,
+      requireSignedMetadata: false,
+      statusTrustPolicy: .warning
+    )
+    /* ORIGINAL (LoTE primary, static fallback):
     return TrustConfiguration(
       trustSource: .etsi(
         EtsiTrustSource(
@@ -236,9 +254,10 @@ struct WalletKitConfigImpl: WalletKitConfig {
         StaticListTrustSource(rootCertificates: staticRootCertificates)
       ),
       defaultPolicy: .warning,
-      requireSignedMetadata: true,
+      requireSignedMetadata: false,
       statusTrustPolicy: .warning
     )
+    */
   }
 
   var staticRootCertificates: [Data] {
