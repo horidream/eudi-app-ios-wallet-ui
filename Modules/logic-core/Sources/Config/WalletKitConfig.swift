@@ -250,7 +250,8 @@ struct WalletKitConfigImpl: WalletKitConfig {
       "pidissuerca02_nl",
       "pidissuerca02_pt",
       "pidissuerca02_ut",
-      "r45_staging"
+      "r45_staging",
+      "dev-ca"
     ].compactMap { loadCertificate($0) }
   }
 
